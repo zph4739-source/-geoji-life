@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>거지 라이프: 길거리의 제왕</title>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.css">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- ===== 배경 영상 + 노이즈 오버레이 ===== -->
+  <div class="bg-video-placeholder"></div>
+  <div class="bg-overlay"></div>
+
+  <!-- ===== GTA 스타일 오프닝 인트로 컨테이너 ===== -->
+  <!-- intro.js가 여기에 동적으로 씬을 주입합니다. -->
+  <div id="intro">
+      <button id="skipIntro">SKIP ▶</button>
+  </div>
+
+  <!-- ===== 게임 앱 본체 ===== -->
+  <div id="app" style="display: none;">
+    <!-- 상단: 신분 배지 + 수배도 -->
+    <div class="topbar">
+      <div class="rankbadge">
+        <div class="rank-emoji" id="rankEmoji">🥫</div>
+        <div class="rank-meta">
+          <div class="rank-label">Status</div>
+          <div class="rank-name" id="rankName">노숙자</div>
+        </div>
+        <div class="prestige-pip" id="prestigePip" style="display:none"></div>
+      </div>
+      <div class="wanted">
+        <div class="wanted-label">Wanted</div>
+        <div class="stars" id="stars"></div>
+        <div class="heatnum" id="heatNum">0 / 100</div>
+      </div>
+    </div>
+
+    <!-- 현금 계기판 -->
+    <div class="cashcard">
+      <div class="cash-eyebrow">Total Cash</div>
+      <div class="cash" id="cash"><span class="won">₩</span>0</div>
+      <div class="rates">
+        <span>수익 <b id="rps">₩0</b> / 초</span>
+        <span class="tapr">탭 <b id="cpt">₩0</b></span>
+      </div>
+    </div>
+
+    <!-- 메인 탭(HUSTLE) 버튼 -->
+    <div class="tapwrap">
+      <button class="tapbtn" id="tapBtn">HUSTLE<small id="tapSub">길거리에서 구걸한다</small></button>
+    </div>
+
+    <!-- 수배도 관리 버튼들 -->
+    <div class="heatrow">
+      <button class="hbtn low" id="layLowBtn">
+        <span class="ico">🤫</span>잠수 타기
+        <span class="sub" id="lowSub">수배 -40% · 10s OFF</span>
+      </button>
+      <button class="hbtn bribe" id="bribeBtn">
+        <span class="ico">💸</span>뇌물
+        <span class="sub" id="bribeSub">₩0 · CLEAR HEAT</span>
+      </button>
+      <button class="hbtn police" id="policeBtn">
+        <span class="ico">🛡️</span>경찰 정기 상납
+        <span class="sub">OFF · 수배 억제</span>
+      </button>
+    </div>
+
+    <!-- 탭 메뉴판 -->
+    <div class="tabs">
+      <div class="tab active" data-tab="biz">비즈니스</div>
+      <div class="tab" data-tab="ops">작전</div>
+      <div class="tab" data-tab="mkt">블랙마켓</div>
+      <div class="tab" data-tab="crew">조직</div>
+      <div class="tab" data-tab="war">세력 다툼</div>
+      <div class="tab" data-tab="stat">데이터</div>
+    </div>
+
+    <!-- 온보딩 목표 추적기 -->
+    <div id="quest"></div>
+
+    <!-- 탭별 콘텐츠 패널 -->
+    <div id="panel"></div>
+
+    <!-- 데이터 초기화 -->
+    <div style="text-align:center;margin-top:8px;font-size:11px;letter-spacing:.1em;">
+      <span class="reset" id="resetBtn">SYSTEM WIPE · 모든 데이터 초기화</span>
+    </div>
+  </div>
+
+  <!-- 토스트 알림 컨테이너 + 단속 플래시 오버레이 -->
+  <div id="toasts"></div>
+  <div class="raidflash" id="flash"></div>
+
+  <script src="data.js"></script>
+  <script src="core.js"></script>
+  <script src="economy.js"></script>
+  <script src="rivals.js"></script>
+  <script src="ui.js"></script>
+  <script src="main.js"></script>
+  <script src="intro.js"></script>
+</body>
+</html>
