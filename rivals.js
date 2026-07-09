@@ -32,7 +32,7 @@
   // ── 로컬 LLM(Ollama) 설정 — 켜져 있으면 실시간 대사 생성, 아니면 폴백 ──
   const OLLAMA={
     enabled:true,
-    url:'https://geoji-llm-proxy.jc7896h.workers.dev',   // ★ 배포 후 실제 Worker 주소로 교체
+    url:'https://geoji-llm-proxy.USERNAME.workers.dev',   // ★ 배포 후 실제 Worker 주소로 교체
     model:'Llama-3.3-70B · Groq',       // 배지 표시용 라벨 (실제 모델은 Worker가 결정)
     timeoutMs:7000,                     // 응답 제한 (초과 시 폴백 유지)
     temperature:0.9,
@@ -259,7 +259,7 @@ function rivalDemandTribute(r){
     ov.innerHTML='<div class="evt-card tier-high"><div class="evt-kicker mid">'+(mode==='diplo'?'DIPLOMACY':'NEGOTIATION')+'</div>'+
       '<div class="evt-title">'+title+'</div>'+
       '<div class="evt-desc" style="margin-bottom:0">'+head+
-        '<br><small style="color:var(--muted)">현재 신뢰 '+Math.round(r.credibility||50)+' · 예상 성공 '+Math.round(negoBaseChance(r,mode)*100)+'%'+(online?' · LLM 실시간':' · 폴백 판정')+'</small></div>'+
+        '<br><small style="color:var(--muted)">현재 신뢰 '+Math.round(r.credibility||50)+(online?' · 네 말의 설득력으로 판정 (LLM)':' · 예상 성공 '+Math.round(negoBaseChance(r,mode)*100)+'% · 폴백 판정')+'</small></div>'+
       '<textarea id="negoText" class="nego-input" rows="3" placeholder="예: 이번 달은 경찰이 깔렸다. 다음 달에 1.5배로 갚지."></textarea>'+
       '<button id="negoBtn" class="nego-btn">'+(mode==='diplo'?'친선 제안 보내기':'협상안 전송')+'</button>'+
       '<button id="negoCancel" class="nego-cancel">물러난다</button></div>';
@@ -316,7 +316,7 @@ function rivalDemandTribute(r){
 
       if(online){
         const goal = mode==='diplo' ? '관계 개선을 위해 친선을 제안하며' : '상납금 요구에 대해';
-        const sys = "너는 한국 누아르 세계의 보스 '"+r.name+"'이다. 성향은 '"+ARCH[r.archetype].desc+"'. 플레이어(너에 대한 신뢰도 "+Math.round(cred)+"/100)가 "+goal+" \""+msg+"\"라고 말했다. 배짱·논리·신용이 마음에 들면 'ACCEPT', 어설프거나 못 믿겠으면 'REJECT'로 시작하고 콜론 뒤에 한 줄로 답해라. 예: \"ACCEPT: 배짱 하나는 마음에 드네. 이번만 봐주지.\", \"REJECT: 혓바닥이 길군. 돈이나 내놔.\"";
+        const sys = "너는 한국 누아르 세계의 보스 '"+r.name+"'이다. 성향: '"+ARCH[r.archetype].desc+"'. 협상 상대(너에 대한 신뢰도 "+Math.round(cred)+"/100)가 "+goal+" 이렇게 말했다: \""+msg+"\". 판단 기준은 오직 '이 말의 설득력'이다 — 논리가 서는지, 배짱이 있는지, 너를 납득시킬 구체적 명분이 있는지 보고 결정해라. 그럴듯하면 받아들이고, 허풍·헛소리·무례·근거 없는 소리면 거절해라. 신뢰도 숫자는 참고만 하고 말 자체를 우선해라. 반드시 'ACCEPT' 또는 'REJECT'로 시작하고 콜론 뒤에 네 성향다운 짧은 한 줄 대사를 붙여라. 예: \"ACCEPT: 논리 하나는 제법이군. 이번만 봐주지.\", \"REJECT: 그딴 헛소리로 넘어갈 줄 알았나.\"";
         const ctrl=new AbortController();const to=setTimeout(()=>ctrl.abort(),OLLAMA.timeoutMs);
         try {
           const res = await fetch(OLLAMA.url+'/api/generate', {
@@ -329,8 +329,7 @@ function rivalDemandTribute(r){
           if(!reply) throw new Error('empty');
           let isAccept = /^\s*accept/i.test(reply);
           const line = reply.replace(/^\s*(accept|reject)\b[\s:：\-]*/i,'').trim() || reply;
-          // 신뢰가 낮으면 LLM이 봐줘도 확률적으로 뒤집힘(난이도 상향)
-          if(isAccept && Math.random() > negoBaseChance(r,mode)+0.25) isAccept=false;
+          // A+C: LLM이 네 말을 읽고 내린 판단(ACCEPT/REJECT)을 그대로 존중한다 — 확률로 뒤집지 않음
           resolve(isAccept, line);
         } catch(e) {
           clearTimeout(to); ollamaOnline=false;
