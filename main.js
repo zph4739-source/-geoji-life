@@ -14,6 +14,7 @@
         mkt:S.mkt,bet:S.bet,duelPlayed:S.duelPlayed,duelWins:S.duelWins,duelNet:S.duelNet,
         crew:S.crew,gangFights:S.gangFights,gangWins:S.gangWins,prestige:S.prestige,notoriety:S.notoriety,choiceEvents:S.choiceEvents,rivals:S.rivals,warSuppressUntil:S.warSuppressUntil,turf:S.turf,guOwn:S.guOwn,guDef:S.guDef,mktWar:S.mktWar,policePay:S.policePay,tutStep:S.tutStep,tutDone:S.tutDone,lastSaved:Date.now(),ver:2};
       localStorage.setItem(SAVE_KEY,JSON.stringify(d));
+      if(typeof window!=='undefined' && typeof window.cloudSave==='function') window.cloudSave(d);
     }catch(e){}
   }
   function loadGame(){try{const r=localStorage.getItem(SAVE_KEY);return r?JSON.parse(r):null;}catch(e){return null;}}
