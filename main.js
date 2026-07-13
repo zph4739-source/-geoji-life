@@ -14,6 +14,7 @@
         mkt:S.mkt,bet:S.bet,duelPlayed:S.duelPlayed,duelWins:S.duelWins,duelNet:S.duelNet,
         crew:S.crew,gangFights:S.gangFights,gangWins:S.gangWins,prestige:S.prestige,notoriety:S.notoriety,choiceEvents:S.choiceEvents,rivals:S.rivals,warSuppressUntil:S.warSuppressUntil,turf:S.turf,guOwn:S.guOwn,guDef:S.guDef,mktWar:S.mktWar,policePay:S.policePay,tutStep:S.tutStep,tutDone:S.tutDone,lastSaved:Date.now(),ver:2};
       d.raid=S.raid||null;                                          // 레이드 진행도 저장
+      d.ach=S.ach||{}; d.achFlags=S.achFlags||{}; d.negoWins=S.negoWins||0;   // 업적 저장
       localStorage.setItem(SAVE_KEY,JSON.stringify(d));
       if(typeof window!=='undefined' && typeof window.cloudSave==='function') window.cloudSave(d);
     }catch(e){}
@@ -21,10 +22,13 @@
   function loadGame(){try{const r=localStorage.getItem(SAVE_KEY);return r?JSON.parse(r):null;}catch(e){return null;}}
   function clearSave(){try{localStorage.removeItem(SAVE_KEY);}catch(e){}}
   function applyLoad(d){
+    S.ach=(d.ach&&typeof d.ach==='object')?d.ach:{};
+    S.achFlags=(d.achFlags&&typeof d.achFlags==='object')?d.achFlags:{};
+    S.negoWins=d.negoWins||0;
     S.raid=(d.raid&&typeof d.raid==='object')?{coolUntil:d.raid.coolUntil||0,clears:d.raid.clears||0,fails:d.raid.fails||0,best:d.raid.best||0}:{coolUntil:0,clears:0,fails:0,best:0};
     ['cash','totalEarned','clickBase','heat','raids','rankIdx','opsRun','opsWin','bet','duelPlayed','duelWins','duelNet','gangFights','gangWins','prestige','notoriety','choiceEvents','warSuppressUntil','tutStep','turf'].forEach(k=>{if(typeof d[k]==='number')S[k]=d[k];});
     if(typeof d.tutDone==='boolean')S.tutDone=d.tutDone;if(typeof d.policePay==='boolean')S.policePay=d.policePay;
-    if(Array.isArray(d.rivals)&&d.rivals.length){S.rivals=d.rivals.map(r=>({id:r.id,name:r.name,archetype:ARCH[r.archetype]?r.archetype:'raider',power:r.power||30,treasury:r.treasury||2000,hostility:Math.max(0,Math.min(100,r.hostility||10)),state:r.state||'neutral',truceUntil:r.truceUntil||0,redirect:!!r.redirect,known:!!r.known,targetMult:r.targetMult||(0.8+Math.random()*0.5),log:Array.isArray(r.log)?r.log.slice(0,5):[],trend:r.trend||0,credibility:(typeof r.credibility==='number'?Math.max(0,Math.min(100,r.credibility)):50),diploCoolUntil:r.diploCoolUntil||0}));} else {initRivals();}
+    if(Array.isArray(d.rivals)&&d.rivals.length){S.rivals=d.rivals.map(r=>({id:r.id,name:r.name,archetype:ARCH[r.archetype]?r.archetype:'raider',power:r.power||30,treasury:r.treasury||2000,hostility:Math.max(0,Math.min(100,r.hostility||10)),state:r.state||'neutral',truceUntil:r.truceUntil||0,redirect:!!r.redirect,known:!!r.known,targetMult:r.targetMult||(0.8+Math.random()*0.5),log:Array.isArray(r.log)?r.log.slice(0,5):[],trend:r.trend||0,credibility:(typeof r.credibility==='number'?Math.max(0,Math.min(100,r.credibility)):50),diploCoolUntil:r.diploCoolUntil||0,invest:(typeof r.invest==='number'?Math.max(0,Math.min(100,r.invest)):0)}));} else {initRivals();}
     if(Array.isArray(d.biz))BIZ.forEach((_,i)=>S.biz[i]=d.biz[i]||0);
     if(Array.isArray(d.tapup))TAPUP.forEach((_,i)=>S.tapup[i]=d.tapup[i]||0);
     if(Array.isArray(d.crew))CREW.forEach((_,i)=>S.crew[i]=d.crew[i]||0);
@@ -95,6 +99,7 @@
     const sm=e.target.closest('[data-seoulmap]');if(sm){openSeoulMap();return;}
     if(e.target.closest('#raidBtn')){ if(typeof openRaid==='function') openRaid(); return; }
     const wd=e.target.closest('[data-diplo]');if(wd){diploRival(wd.dataset.diplo);return;}
+    const wv=e.target.closest('[data-invest]');if(wv){investRival(wv.dataset.invest);return;}
     const wb=e.target.closest('[data-bribe]');if(wb){bribeRival(wb.dataset.bribe);return;}
     const wi=e.target.closest('[data-incite]');if(wi){inciteRival(wi.dataset.incite);return;}
     const wt=e.target.closest('[data-intel]');if(wt){intelRival(wt.dataset.intel);return;}
@@ -124,6 +129,14 @@
     S.ops.forEach((o,i)=>{if(o&&now>=o.endAt)resolveOp(i);});
     checkRank();
   },100);
+  setInterval(()=>{                                              // 🏦 지분 배당 (투자 시스템)
+    if(!S.rivals)return; let div=0;
+    S.rivals.forEach(r=>{ if((r.invest||0)>0 && r.state!=='war'){
+      const d=Math.floor(r.treasury*(r.invest/100)*WARLORD.dividendRate);
+      if(d>0){ div+=d; r.treasury=Math.max(0,r.treasury-d); } } });
+    if(div>0)earn(div);
+  },1000);
+  setInterval(()=>{ if(typeof checkAch==='function') checkAch(); },2000);   // 🏅 업적 체크
   setInterval(maybeEvent,6000);
   setInterval(updateMarket,3000);
   setInterval(aiWarlordTick,WARLORD.tickMs);

@@ -27,6 +27,12 @@
     inciteCost:0.06,        // 이간 비용 = 현금×6%
     tickMs:3000,            // AI 의사결정 주기(ms) — 작을수록 라이벌이 자주 움직임
     // ── 관계·신뢰 시스템 ──
+    // ── 투자/육성(지분) 시스템 ──
+    investCut:0.12,         // 1회 투자액 = 현금×12%
+    investGain:6,           // 1회 투자당 지분(%) 상승폭 기준
+    vassalGate:50,          // 지분 이 이상이면 산하 조직(vassal)
+    dividendRate:0.00035,   // 초당 배당 = 라이벌 금고 × 지분% × 이 값
+    growthPerInvest:0.06,   // 투자 시 라이벌 전력 성장(육성) 비율
     raidGate:70,            // 이 적개심 이상(적대)에서만 무단 약탈 · 그 아래는 협상 가능한 '요구'
     credStart:50,           // 신뢰도 시작값
     diploCoolMs:40000,      // 친선/협상 재시도 쿨다운
@@ -117,7 +123,7 @@
     return {id:'r'+Date.now().toString(36)+Math.floor(Math.random()*1e4).toString(36),name:nm,archetype:ak,
       power:Math.floor(ref*(0.7+Math.random()*0.6)),treasury:Math.floor(Math.max(2000,S.cash*0.4+rps()*60)),
       hostility:rint(8,26),state:'neutral',truceUntil:0,redirect:false,known:false,targetMult:0.8+Math.random()*0.5,log:[],trend:0,
-      credibility:WARLORD.credStart,diploCoolUntil:0};
+      credibility:WARLORD.credStart,diploCoolUntil:0,invest:0};
   }
   function initRivals(){const used=new Set();S.rivals=[];for(let i=0;i<WARLORD.rivalCount;i++)S.rivals.push(makeRival(used));}
   function ensureRivals(){if(!Array.isArray(S.rivals)||!S.rivals.length)initRivals();}
@@ -139,6 +145,8 @@
       let dh=WARLORD.hostBase+(dom>1?WARLORD.hostDominance*Math.min(2,dom-1):0)+S.rankIdx*0.06;
       dh*=(1.25-r.credibility/200);           // 신뢰 높을수록 적개심 상승 완화(0.75~1.25배)
       if(inGrace&&dh>0)dh=0;                  // 복귀 유예: 적개심 상승 동결
+      if((r.invest||0)>0)dh-=(r.invest/100)*1.2;                    // 지분이 클수록 적개심 억제
+      if(isVassal(r)&&dh>0)dh=0;                                    // 산하 조직은 적개심이 오르지 않는다
       if(Date.now()<r.truceUntil)dh=-3;
       r.hostility=Math.max(0,Math.min(100,r.hostility+dh));
       r.trend=dh>0.08?1:dh<-0.08?-1:0;
@@ -282,7 +290,7 @@ function rivalDemandTribute(r){
     function resolve(isAccept, line){
       closeNego();
       if(mode==='diplo')r.diploCoolUntil=Date.now()+WARLORD.diploCoolMs;
-      if(isAccept){
+      if(isAccept){ S.negoWins=(S.negoWins||0)+1;                    // 업적: 협상 성공 카운트
         if(mode==='diplo'){
           r.hostility=Math.max(0,r.hostility-16);r.credibility=Math.min(100,(r.credibility||50)+6);
           r.truceUntil=Math.max(r.truceUntil,Date.now()+Math.floor(WARLORD.diploTruceMs*0.6));r.state='truce';
@@ -519,7 +527,34 @@ function rivalDemandTribute(r){
   }
 
   // 플레이어 전략 행동
-  function bribeRival(id){const r=S.rivals.find(x=>x.id===id);if(!r)return;const amt=Math.max(1000,Math.floor(S.cash*WARLORD.tributeCut));if(S.cash<amt){flashToast('bad','💸 자금 부족','매수할 돈이 없습니다');return;}S.cash-=amt;r.treasury+=amt;r.hostility=Math.max(0,r.hostility-30);r.credibility=Math.min(100,(r.credibility||50)+5);r.truceUntil=Date.now()+60000;r.state='truce';rlog(r,'당신의 매수에 응했다 · 신뢰↑','-');flashToast('good','🤝 매수',r.name+' 적개심↓ 신뢰↑ · 휴전 60초');render();}
+  // 🏦 투자 — 돈을 넣어 지분을 사고 조직을 키운다. 지분이 쌓이면 산하 조직이 된다.
+  function isVassal(r){ return (r.invest||0) >= WARLORD.vassalGate; }
+  function investRival(id){
+    const r=S.rivals.find(x=>x.id===id); if(!r)return;
+    if(r.state==='war'){flashToast('bad','⚔ 전쟁 중','전쟁 상대에겐 투자할 수 없다');return;}
+    const amt=Math.max(1000,Math.floor(S.cash*WARLORD.investCut));
+    if(S.cash<amt){flashToast('bad','💸 자금 부족','투자할 돈이 없습니다');return;}
+    S.cash-=amt; r.treasury+=amt;
+    const before=r.invest||0;
+    // 지분은 올라갈수록 사기 어려워진다(체감 곡선)
+    const gain=Math.max(1.5, WARLORD.investGain*(1-before/130));
+    r.invest=Math.min(100, before+gain);
+    r.power=Math.floor(r.power*(1+WARLORD.growthPerInvest));      // 육성 — 우리 편이 강해진다
+    r.hostility=Math.max(0,r.hostility-18);
+    r.credibility=Math.min(100,(r.credibility||50)+7);            // 투자는 신뢰를 크게 올린다
+    const nowVassal=isVassal(r)&&before<WARLORD.vassalGate;
+    if(nowVassal){
+      r.truceUntil=Date.now()+180000; r.state='truce';
+      rlog(r,'당신의 산하 조직이 되었다','-');
+      flashToast('good','👑 산하 조직 편입',r.name+' 지분 '+Math.round(r.invest)+'% · 이제 당신 편이다');
+    } else {
+      rlog(r,'투자를 받아들였다 · 지분 '+Math.round(r.invest)+'%','-');
+      flashToast('good','🏦 투자',r.name+' 지분 '+Math.round(r.invest)+'% · 전력↑ 신뢰↑');
+    }
+    render();
+  }
+  // 하위호환: 예전 매수 호출도 투자로 연결
+  function bribeRival(id){ investRival(id); }
   function preemptRival(id){const r=S.rivals.find(x=>x.id===id);if(!r)return;if(combatPower()<=0){flashToast('bad','✊ NO CREW','조직원을 먼저 고용하세요');return;}
     runBattle({name:r.name,emoji:ARCH[r.archetype].emoji,power:r.power},win=>{
       if(win){const out=winWar(r,false,null);return {sub:'선제공격 성공 · '+out.sub};}

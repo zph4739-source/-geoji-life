@@ -11,6 +11,7 @@
   const RAID = {
     ALLY_GATE: 60,        // 이 신뢰도 이상이면 참전 가능
     ALLY_CONTRIB: 0.45,   // 참전 라이벌 전력의 45%가 아군 전력에 가산
+    INVEST_BONUS: 0.55,   // 지분 100%면 추가로 +55%p → 최대 전력 100% 기여
     COOL_MS: 150000,      // 레이드 재도전 쿨다운 2.5분
     MIN_RANK: 3,          // 이 신분부터 레이드 해금
     FLOOR: 0.40,          // 성공률 하한 (체감상 불가능해지지 않게)
@@ -44,13 +45,18 @@
   function allies(){
     if(!S.rivals) return [];
     return S.rivals.filter(r =>
-      (r.credibility||0) >= RAID.ALLY_GATE &&
-      r.state !== 'war' &&
-      r.hostility < 70          // 적대 상태면 도와주지 않는다
+      r.state !== 'war' && r.hostility < 70 &&
+      ( (r.credibility||0) >= RAID.ALLY_GATE ||           // 신뢰가 높거나
+        (r.invest||0) >= 50 )                             // 산하 조직이면 참전
     );
   }
+  // 지분이 클수록 더 많은 병력을 보낸다 (투자 → 레이드 전력)
+  function contribOf(r){
+    const inv=(r.invest||0);
+    return RAID.ALLY_CONTRIB + (inv/100)*RAID.INVEST_BONUS;
+  }
   function allyPower(){
-    return Math.floor(allies().reduce((a,r)=>a + r.power*RAID.ALLY_CONTRIB, 0));
+    return Math.floor(allies().reduce((a,r)=>a + r.power*contribOf(r), 0));
   }
 
   // ---------- 보스 생성 (플레이어 기준 스케일링) ----------
@@ -141,6 +147,7 @@
       (win)=>{
         if(win){
           S.raid.clears++;
+          if(boss.tier.id==='risk'){ if(!S.achFlags)S.achFlags={}; S.achFlags.riskRaid=true; }  // 업적: 도박형 성공
           S.raid.best = Math.max(S.raid.best||0, boss.reward);
           earn(boss.reward);
           addHeat(10);

@@ -194,12 +194,13 @@
               ((r.log&&r.log.length)?'<div class="wl-log">'+r.log.slice(0,3).map(e=>'<div class="'+(e.dir==='+'?'up':e.dir==='-'?'down':'')+'">· '+e.text+'</div>').join('')+'</div>':'')
             : '<div class="wl-intel dim">금고/다음 수 — 🔒 정보 미확보</div>';
           h+='<div class="wl-card"><div class="wl-row1"><div class="wl-emoji glyph" style="color:'+(a.emoji==='💼'?'var(--gold)':'var(--heat)')+'">'+a.emoji+'</div>'+
-             '<div style="flex:1;min-width:0"><div class="wl-name">'+r.name+' '+stBadge+'</div><div class="wl-arch">'+a.desc+'</div><div class="wl-arch2">세력 '+fmt(r.power)+' <span style="color:'+powCol+'">(나의 ×'+ratio.toFixed(2)+')</span></div></div></div>'+
+             '<div style="flex:1;min-width:0"><div class="wl-name">'+r.name+' '+stBadge+((r.invest||0)>=50?' <span class="wl-vassal">산하</span>':'')+'</div><div class="wl-arch">'+a.desc+'</div><div class="wl-arch2">세력 '+fmt(r.power)+' <span style="color:'+powCol+'">(나의 ×'+ratio.toFixed(2)+')</span></div></div></div>'+
              '<div class="wl-bars"><div class="wl-bk">적개심</div><div class="wl-bar"><i style="width:'+r.hostility+'%;background:'+hostCol+'"></i></div><div class="wl-bv" style="color:'+hostCol+'">'+Math.round(r.hostility)+tr+'</div></div>'+
              '<div class="wl-bars"><div class="wl-bk">신뢰</div><div class="wl-bar"><i style="width:'+(r.credibility||50)+'%;background:var(--money)"></i></div><div class="wl-bv" style="color:var(--money)">'+Math.round(r.credibility||50)+'</div></div>'+
+             ((r.invest||0)>0?'<div class="wl-bars"><div class="wl-bk">지분</div><div class="wl-bar"><i style="width:'+(r.invest||0)+'%;background:var(--gold)"></i></div><div class="wl-bv" style="color:var(--gold)">'+Math.round(r.invest||0)+'%</div></div>':'')+
              lastLine+intel+
              '<div class="wl-acts"><button class="wl-btn safe" data-diplo="'+r.id+'"'+((r.state==='war'||Date.now()<(r.diploCoolUntil||0))?' disabled':'')+'>'+(Date.now()<(r.diploCoolUntil||0)?('협상 '+Math.ceil(((r.diploCoolUntil||0)-Date.now())/1000)+'s'):'🕊 협상')+'</button>'+
-             '<button class="wl-btn safe" data-bribe="'+r.id+'">매수</button>'+
+             '<button class="wl-btn safe" data-invest="'+r.id+'"'+(r.state==='war'?' disabled':'')+'>🏦 투자'+((r.invest||0)>0?' '+Math.round(r.invest)+'%':'')+'</button>'+
              '<button class="wl-btn" data-incite="'+r.id+'">이간</button>'+
              (r.known?'':'<button class="wl-btn" data-intel="'+r.id+'">정보</button>')+
              (r.state==='war'?'':'<button class="wl-btn gold" data-duel="'+r.id+'">🃏 판돈</button>')+
@@ -221,7 +222,7 @@
         '<div class="pb-row"><span class="pb-k">전과</span><span class="pb-v">'+S.prestige+'범'+(prestigeTitle()?' · '+prestigeTitle():'')+'</span></div>'+
         '<button class="prestige-btn" data-prestige="1" '+((can&&pend>0)?'':'disabled')+'>'+
         ((can&&pend>0)?'자수하고 전설로 — 악명 +'+fmt(pend)+' (+'+(pend*3)+'%)':'자수 조건: 누적 수익 '+won(PRESTIGE_REQ)+' 이상')+'</button></div>';
-      p.innerHTML=pbox+'<div class="stats">'+
+      p.innerHTML=(typeof achPanelHtml==='function'?achPanelHtml():'')+pbox+'<div class="stats">'+
         '<div class="stat"><div class="k">TOTAL REVENUE</div><div class="v gold">'+won(S.totalEarned)+'</div></div>'+
         '<div class="stat"><div class="k">INCOME / SEC</div><div class="v money">'+won(rps())+'</div></div>'+
         '<div class="stat"><div class="k">INCOME / TAP</div><div class="v cyan">'+won(clickPower())+'</div></div>'+
