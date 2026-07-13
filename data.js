@@ -36,12 +36,12 @@
     {emoji:"💼",name:"보호비 징수",cost:2000000000,add:8500000,unlock:42},
   ];
   const OPS=[
-    {emoji:"🏪",name:"편의점 털기",dur:8,cost:0,min:300,max:900,chance:0.90,heat:8,unlock:1},
-    {emoji:"🏧",name:"ATM 털기",dur:16,cost:0,min:4000,max:11000,chance:0.80,heat:14,unlock:2},
-    {emoji:"💍",name:"보석상 습격",dur:35,cost:50000,min:90000,max:280000,chance:0.70,heat:22,unlock:3},
-    {emoji:"🚚",name:"현금수송차 강탈",dur:70,cost:900000,min:2200000,max:6500000,chance:0.60,heat:32,unlock:4},
-    {emoji:"🏦",name:"은행 금고",dur:130,cost:22000000,min:65000000,max:200000000,chance:0.50,heat:46,unlock:5},
-    {emoji:"💎",name:"카지노 금고전",dur:260,cost:550000000,min:1600000000,max:5200000000,chance:0.42,heat:62,unlock:6},
+    {emoji:"🏪",name:"편의점 털기",dur:8,cost:0,min:450,max:1400,chance:0.92,heat:7,unlock:1},
+    {emoji:"🏧",name:"ATM 털기",dur:16,cost:0,min:6500,max:18000,chance:0.84,heat:12,unlock:2},
+    {emoji:"💍",name:"보석상 습격",dur:35,cost:50000,min:150000,max:460000,chance:0.76,heat:19,unlock:3},
+    {emoji:"🚚",name:"현금수송차 강탈",dur:70,cost:900000,min:3800000,max:11000000,chance:0.68,heat:27,unlock:4},
+    {emoji:"🏦",name:"은행 금고",dur:130,cost:22000000,min:115000000,max:340000000,chance:0.60,heat:39,unlock:5},
+    {emoji:"💎",name:"카지노 금고전",dur:260,cost:550000000,min:2900000000,max:9000000000,chance:0.52,heat:53,unlock:6},
   ];
 
   const CRIT={chance:0.13, mult:7};
@@ -80,28 +80,28 @@
     mktWar:null,           // 암시장 세력전 상태 {rid,mode:'pump'|'dump',until,startPrice}
     tutStep:0, tutDone:false,
   };
-  const MKT={lo:550,hi:3400,base:1500};
+  const MKT={lo:380,hi:5200,base:1500};   // 변동폭 확대 — 사재기/투매 차익 기회 상승
   const PRESTIGE_REQ=1000000000000;   // 자수 가능 최소 누적 수익(1조)
 
   // ---------- 난이도: HARDCORE (B) — 한 곳에서 튜닝 ----------
   const DIFF={
     name:'HARDCORE',
-    bizGrowth:1.165,   // 사업 비용 증가율 (기존 1.15)
-    tapGrowth:1.19,    // 업그레이드 비용 증가율 (기존 1.18)
-    crewGrowth:1.17,   // 조직원 비용 증가율 (기존 1.16)
-    heatMult:1.4,      // 사업 수배도 발생량 배수
+    bizGrowth:1.13,    // 사업 비용 증가율 ↓ (1.165 → 1.13 : 비즈니스 확장이 현실적으로)
+    tapGrowth:1.19,    // 업그레이드 비용 증가율 (HUSTLE은 그대로 — 너프 안 함)
+    crewGrowth:1.15,   // 조직원 비용 증가율 ↓ (조직/패싸움 진입장벽 완화)
+    heatMult:1.0,      // 사업 수배도 발생량 배수 ↓ (1.4 → 1.0 : 비즈니스 페널티 제거)
     tapHeat:0.20,      // 탭당 수배도 (rank>=3, 기존 0.15)
     critChance:0.10,   // 크리티컬 확률 (기존 0.13)
     raidLoss:0.32,     // 단속 시 현금 압수율 (기존 0.20)
     raidHeat:52,       // 단속 후 잔류 수배도 (기존 40)
     bribeMult:72,      // 뇌물 = rps×72 (기존 45)
     bribeBase:0.018,   // + 누적수익×1.8% (기존 1%)
-    opPenalty:0.07,    // 범죄작전 성공률 일괄 -7%p
+    opPenalty:0.02,    // 범죄작전 성공률 일괄 -2%p ↓ (0.07 → 0.02 : 작전이 실제 선택지가 되게)
     layLowFactor:0.7,  // 잠수 시 수배 ×0.7 (기존 0.6 → 덜 깎임)
     layLowDur:8000,    // 잠수 지속 8초 (기존 10초)
     coinWin:0.45,      // 동전 던지기 승률 (기존 0.47)
-    offlineEff:0.35,   // 오프라인 수익 효율 (기존 0.50)
-    offlineMax:6*3600, // 오프라인 최대 정산 6시간 (기존 8h)
+    offlineEff:0.55,   // 오프라인 수익 효율 ↑ (0.35 → 0.55 : rps 투자 가치 상승)
+    offlineMax:8*3600, // 오프라인 최대 정산 8시간 ↑
   };
 
   // 경찰 정기 상납: 켜두면 수입 일부를 자동 헌납하고 수배도를 억제

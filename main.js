@@ -13,6 +13,7 @@
         heat:S.heat,raids:S.raids,rankIdx:S.rankIdx,opsRun:S.opsRun,opsWin:S.opsWin,
         mkt:S.mkt,bet:S.bet,duelPlayed:S.duelPlayed,duelWins:S.duelWins,duelNet:S.duelNet,
         crew:S.crew,gangFights:S.gangFights,gangWins:S.gangWins,prestige:S.prestige,notoriety:S.notoriety,choiceEvents:S.choiceEvents,rivals:S.rivals,warSuppressUntil:S.warSuppressUntil,turf:S.turf,guOwn:S.guOwn,guDef:S.guDef,mktWar:S.mktWar,policePay:S.policePay,tutStep:S.tutStep,tutDone:S.tutDone,lastSaved:Date.now(),ver:2};
+      d.raid=S.raid||null;                                          // 레이드 진행도 저장
       localStorage.setItem(SAVE_KEY,JSON.stringify(d));
       if(typeof window!=='undefined' && typeof window.cloudSave==='function') window.cloudSave(d);
     }catch(e){}
@@ -20,6 +21,7 @@
   function loadGame(){try{const r=localStorage.getItem(SAVE_KEY);return r?JSON.parse(r):null;}catch(e){return null;}}
   function clearSave(){try{localStorage.removeItem(SAVE_KEY);}catch(e){}}
   function applyLoad(d){
+    S.raid=(d.raid&&typeof d.raid==='object')?{coolUntil:d.raid.coolUntil||0,clears:d.raid.clears||0,fails:d.raid.fails||0,best:d.raid.best||0}:{coolUntil:0,clears:0,fails:0,best:0};
     ['cash','totalEarned','clickBase','heat','raids','rankIdx','opsRun','opsWin','bet','duelPlayed','duelWins','duelNet','gangFights','gangWins','prestige','notoriety','choiceEvents','warSuppressUntil','tutStep','turf'].forEach(k=>{if(typeof d[k]==='number')S[k]=d[k];});
     if(typeof d.tutDone==='boolean')S.tutDone=d.tutDone;if(typeof d.policePay==='boolean')S.policePay=d.policePay;
     if(Array.isArray(d.rivals)&&d.rivals.length){S.rivals=d.rivals.map(r=>({id:r.id,name:r.name,archetype:ARCH[r.archetype]?r.archetype:'raider',power:r.power||30,treasury:r.treasury||2000,hostility:Math.max(0,Math.min(100,r.hostility||10)),state:r.state||'neutral',truceUntil:r.truceUntil||0,redirect:!!r.redirect,known:!!r.known,targetMult:r.targetMult||(0.8+Math.random()*0.5),log:Array.isArray(r.log)?r.log.slice(0,5):[],trend:r.trend||0,credibility:(typeof r.credibility==='number'?Math.max(0,Math.min(100,r.credibility)):50),diploCoolUntil:r.diploCoolUntil||0}));} else {initRivals();}
@@ -45,6 +47,8 @@
     if(away<30)return null;
     const gain=Math.floor(rps()*DIFF.offlineEff*away);   // 하드코어 효율
     if(gain>0)earn(gain);
+    // 자리 비운 만큼 복귀 유예 부여 — 라이벌 추격/적개심을 잠시 늦춰 '따라잡힘' 체감 완화
+    if(away>=120)S.awayGraceUntil=Date.now()+Math.min(180000, 60000+away*20);
     return {away,gain};
   }
   function showOffline(info){
@@ -89,6 +93,7 @@
     const cw=e.target.closest('[data-crew]');if(cw){recruit(+cw.dataset.crew);return;}
     const ga=e.target.closest('[data-gang]');if(ga){startBattle(+ga.dataset.gang);return;}
     const sm=e.target.closest('[data-seoulmap]');if(sm){openSeoulMap();return;}
+    if(e.target.closest('#raidBtn')){ if(typeof openRaid==='function') openRaid(); return; }
     const wd=e.target.closest('[data-diplo]');if(wd){diploRival(wd.dataset.diplo);return;}
     const wb=e.target.closest('[data-bribe]');if(wb){bribeRival(wb.dataset.bribe);return;}
     const wi=e.target.closest('[data-incite]');if(wi){inciteRival(wi.dataset.incite);return;}

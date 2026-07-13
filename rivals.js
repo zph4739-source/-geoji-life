@@ -10,10 +10,13 @@
     aggression:'HARSH',
     rivalCount:3,
     minRank:2,              // 양아치부터 라이벌이 주목
-    hostBase:0.9,           // 기본 적개심 상승/틱
-    hostDominance:1.6,      // 우위일 때 추가 상승
+    hostBase:0.45,          // 기본 적개심 상승/틱 (0.9 → 0.45 : 압박 절반)
+    hostDominance:1.0,      // 우위일 때 추가 상승 (1.6 → 1.0)
     powerGrowth:0.05,       // 라이벌 세력 성장/틱
     powerFloor:0.9,         // 플레이어 기준전력 대비 최소 비율(러버밴딩)
+    catchGain:0.05,         // 러버밴딩 추격 게인 (0.12 → 0.05 : 시정수 ~25s → ~60s)
+    catchGainAway:0.02,     // 자리 비운 직후 추격 게인 (복귀 즉시 따라잡히지 않게)
+    awayGraceMs:90000,      // 복귀 후 이 시간 동안 추격 완화 + 적개심 동결
     raidLoss:0.12,          // 약탈 현금 손실
     warLoss:0.25,           // 전쟁 패배/항복 현금 손실
     warSuppress:0.4,        // 전쟁 패배 시 수익 -40%
@@ -127,12 +130,15 @@
       if(!r.log)r.log=[];
       const oldH=r.hostility;
       const target=Math.max(30,ref*r.targetMult);
-      r.power=Math.floor(r.power+(target-r.power)*0.12+Math.random()*0.03*target); // 타깃으로 수렴(폭주 방지)
+      const inGrace=Date.now()<(S.awayGraceUntil||0);                    // 복귀 직후 유예
+      const gain=inGrace?WARLORD.catchGainAway:WARLORD.catchGain;
+      r.power=Math.floor(r.power+(target-r.power)*gain+Math.random()*0.02*target); // 타깃으로 천천히 수렴
       r.treasury=Math.floor(r.treasury*1.02+Math.max(0,rps())*3);
       if(r.credibility===undefined)r.credibility=WARLORD.credStart;
       const dom=ref/(r.power||1);
       let dh=WARLORD.hostBase+(dom>1?WARLORD.hostDominance*Math.min(2,dom-1):0)+S.rankIdx*0.06;
       dh*=(1.25-r.credibility/200);           // 신뢰 높을수록 적개심 상승 완화(0.75~1.25배)
+      if(inGrace&&dh>0)dh=0;                  // 복귀 유예: 적개심 상승 동결
       if(Date.now()<r.truceUntil)dh=-3;
       r.hostility=Math.max(0,Math.min(100,r.hostility+dh));
       r.trend=dh>0.08?1:dh<-0.08?-1:0;
