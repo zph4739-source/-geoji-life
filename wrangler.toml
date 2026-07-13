@@ -1,0 +1,7 @@
+name = "geoji-llm-proxy"
+main = "worker.js"
+compatibility_date = "2026-01-01"
+
+# GROQ_API_KEY 는 코드/파일에 넣지 말고 secret 으로 등록하세요:
+#   npx wrangler secret put GROQ_API_KEY
+# (대시보드로 배포하는 경우: Workers > 프로젝트 > Settings > Variables and Secrets 에 추가)

@@ -136,6 +136,7 @@
       const cp=combatPower();
       let h='<div class="combathdr"><div><div class="lbl">조직 전투력</div><div style="font-size:10px;color:var(--muted);margin-top:2px">조직원 '+crewCount()+'명 · 자릿세 <span style="color:var(--money)">+'+won(crewIncome())+'/s</span> · 단속 경호</div></div>'+
             '<div class="val">'+fmt(cp)+'</div></div>';
+      if(typeof raidPanelHtml==='function') h+=raidPanelHtml();     // 보스 레이드 진입
       h+='<div class="crewsub">조직원 고용 · RECRUIT</div><div class="list">';
       CREW.forEach((c,i)=>{const cost=crewCost(i),af=S.cash>=cost,lk=!crewUnlocked(i);
         h+='<div class="item '+(af?'afford':'')+(lk?' locked':'')+'" data-crew="'+i+'"><div class="emoji glyph" style="color:var(--gold)">'+(lk?'⊘':c.emoji)+'</div>'+
