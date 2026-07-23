@@ -811,3 +811,90 @@ body.high-heat::after {
 .ach-desc{font-size:10.5px;color:var(--muted);margin-top:2px;line-height:1.4;}
 .ach-rw{font-family:var(--font-mono);font-size:11px;font-weight:800;color:var(--money);flex-shrink:0;text-align:right;}
 .ach-done{color:var(--gold);font-weight:900;}
+
+/* ============================================================
+   반응형 레이아웃 (Responsive)
+   · 기본(모바일)  : 단일 컬럼 — 기존 동작 유지
+   · ≥640px        : 컬럼을 넓혀 여백 확보
+   · ≥980px        : 2단 — 좌측 조작부 / 우측 탭 패널(자체 스크롤)
+   · 작은 폰/가로모드 : 밀도 조정
+   ============================================================ */
+
+/* 노치 대응 + 더블탭 확대로 인한 탭 지연 제거 */
+#app{ padding-bottom: calc(28px + env(safe-area-inset-bottom, 0px)); }
+.tapbtn, .hbtn, .tab, .runbtn, .wl-btn, .auth-btn, .btn, button{ touch-action: manipulation; }
+
+/* ---------- 작은 폰 (≤380px) ---------- */
+@media (max-width:380px){
+  #app{ padding:10px 10px 22px; gap:10px; }
+  .cash{ font-size:34px; }
+  .cash .won{ font-size:20px; }
+  .tapbtn{ font-size:20px; }
+  .topbar{ gap:8px; }
+  .rank-emoji{ font-size:22px; }
+  .heatrow{ gap:6px; }
+}
+
+/* ---------- 큰 폰 · 태블릿 (≥640px) ---------- */
+@media (min-width:640px){
+  #app{ max-width:600px; padding:18px 18px 30px; gap:14px; }
+  .cash{ font-size:52px; }
+  .cash .won{ font-size:28px; }
+  .tapbtn{ font-size:28px; }
+  .heatrow > *{ flex:1 1 0; }          /* 3버튼 균등 분할 */
+}
+
+/* ---------- 데스크톱 2단 (≥980px) ---------- */
+@media (min-width:980px){
+  #app{
+    max-width:1080px;
+    display:grid;
+    grid-template-columns:minmax(300px,352px) minmax(0,1fr);
+    grid-template-areas:
+      "top   tabs"
+      "cash  panel"
+      "tap   panel"
+      "heat  panel"
+      "quest panel"
+      "reset panel";
+    align-content:start;
+    gap:12px 18px;
+    padding:20px 20px 28px;
+  }
+  #app > .topbar   { grid-area:top;   }
+  #app > .cashcard { grid-area:cash;  }
+  #app > .tapwrap  { grid-area:tap;   }
+  #app > .heatrow  { grid-area:heat;  }
+  #app > .tabs     { grid-area:tabs;  }
+  #app > #quest    { grid-area:quest; }
+  #app > div:last-child { grid-area:reset; align-self:start; }
+
+  /* 패널만 내부 스크롤 → 좌측 조작부가 항상 보인다 */
+  #app > #panel{
+    grid-area:panel;
+    max-height:calc(100vh - 132px);
+    overflow-y:auto;
+    overscroll-behavior:contain;
+    scrollbar-width:thin;
+  }
+  #app > #panel::-webkit-scrollbar{ width:8px; }
+  #app > #panel::-webkit-scrollbar-thumb{ background:#26272e; border-radius:4px; }
+
+  .cash{ font-size:46px; }
+  .tapbtn{ font-size:26px; }
+  .heatrow > *{ flex:1 1 0; }
+}
+
+/* ---------- 와이드 (≥1400px) ---------- */
+@media (min-width:1400px){
+  #app{ max-width:1180px; grid-template-columns:minmax(320px,380px) minmax(0,1fr); }
+  .cash{ font-size:50px; }
+}
+
+/* ---------- 가로 모드 낮은 화면 ---------- */
+@media (max-height:520px) and (orientation:landscape){
+  #app{ min-height:auto; }
+  .tapbtn{ font-size:19px; padding:14px; }
+  .tapbtn small{ margin-top:3px; }
+  .cash{ font-size:30px; margin:6px 0 8px; }
+}
